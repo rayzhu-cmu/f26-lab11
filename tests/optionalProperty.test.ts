@@ -37,33 +37,33 @@ describe('delivering the same message more than once', () => {
 // ledger says and what the payment provider settled depend only on which
 // refund messages exist, not on how many times each one was delivered.
 //
-// import fc from 'fast-check';
-// import { REFUND_REQUESTED } from '../src/bus/events';
-//
-// describe('optional property: replay schedules', () => {
-//   it('leaves the refund state where one delivery each would leave it', () => {
-//     fc.assert(
-//       fc.property(fc.array(fc.nat({ max: 2 }), { minLength: 1, maxLength: 12 }), (schedule) => {
-//         const app = newApp();
-//         const bookings = [
-//           app.service.book(aRequest({ start: 11 * 60, end: 13 * 60 })),
-//           app.service.book(aRequest({ start: 13 * 60, end: 15 * 60 })),
-//           app.service.book(aRequest({ start: 15 * 60, end: 17 * 60 })),
-//         ];
-//         for (const booking of bookings) {
-//           app.service.cancel(booking.id);
-//         }
-//         const refunds = app.bus.messagesOfType(REFUND_REQUESTED);
-//         const owed = refunds.length * bookings[0].priceCents;
-//
-//         for (const index of schedule) {
-//           app.bus.redeliver(refunds[index].id);
-//         }
-//
-//         expect(app.ledger.totalRefundedCents()).toBe(owed);
-//         expect(app.gateway.totalSettledCents()).toBe(owed);
-//       }),
-//       { numRuns: 100 },
-//     );
-//   });
-// });
+import fc from 'fast-check';
+import { REFUND_REQUESTED } from '../src/bus/events';
+
+describe('optional property: replay schedules', () => {
+  it('leaves the refund state where one delivery each would leave it', () => {
+    fc.assert(
+      fc.property(fc.array(fc.nat({ max: 2 }), { minLength: 1, maxLength: 12 }), (schedule) => {
+        const app = newApp();
+        const bookings = [
+          app.service.book(aRequest({ start: 11 * 60, end: 13 * 60 })),
+          app.service.book(aRequest({ start: 13 * 60, end: 15 * 60 })),
+          app.service.book(aRequest({ start: 15 * 60, end: 17 * 60 })),
+        ];
+        for (const booking of bookings) {
+          app.service.cancel(booking.id);
+        }
+        const refunds = app.bus.messagesOfType(REFUND_REQUESTED);
+        const owed = refunds.length * bookings[0].priceCents;
+
+        for (const index of schedule) {
+          app.bus.redeliver(refunds[index].id);
+        }
+
+        expect(app.ledger.totalRefundedCents()).toBe(owed);
+        expect(app.gateway.totalSettledCents()).toBe(owed);
+      }),
+      { numRuns: 100 },
+    );
+  });
+});
